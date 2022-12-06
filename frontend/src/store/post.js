@@ -1,6 +1,6 @@
 import { csrfFetch } from './csrf';
 
-// GET ALL POSTS FROM USER
+// GET POSTS
 const GET_POSTS_FROM_USER = 'posts/GET_POSTS_FROM_USER';
 const getPostsFromUser = posts => {
     return {
@@ -12,7 +12,6 @@ export const getAllPostsFromUser = userId => async dispatch => {
     const res = await csrfFetch(`/api/posts/${userId}/`);
     const posts = await res.json();
     dispatch(getPostsFromUser(posts));
-    return posts;
 };
 
 // CREATE POST
@@ -33,7 +32,6 @@ export const createOnePost = ({ userId, image, caption }) => async dispatch => {
     });
     const post = await res.json();
     dispatch(createPost(post));
-    return post;
 };
 
 // EDIT_POST
@@ -54,7 +52,6 @@ export const editOnePost = ({ postId, caption }) => async dispatch => {
     });
     const post = await res.json();
     dispatch(editPost(post));
-    return post;
 };
 
 // DELETE_POST
@@ -72,9 +69,8 @@ export const deleteOnePost = postId => async dispatch => {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ postId })
-    });
-    dispatch(deletePost(postId));
-    return postId;
+    })
+    .then(dispatch(deletePost(postId)));
 };
 
 const postReducer = (state={}, action) => {
@@ -87,7 +83,6 @@ const postReducer = (state={}, action) => {
 
         case CREATE_POST:
         case EDIT_POST:
-            console.log(action.post);
             newState[action.post.id] = action.post;
             return { ...newState };
         
