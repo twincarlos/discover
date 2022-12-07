@@ -1,6 +1,20 @@
 import { csrfFetch } from './csrf';
 
-// GET POSTS
+// GET ALL POSTS
+const GET_POSTS = 'posts/GET_POSTS';
+const getPosts = posts => {
+    return {
+        type: GET_POSTS,
+        posts
+    };
+};
+export const getAllPosts = () => async dispatch => {
+    const res = await csrfFetch('/api/posts/');
+    const posts = await res.json();
+    dispatch(getPosts(posts));
+};
+
+// GET ALL POSTS FROM USER
 const GET_POSTS_FROM_USER = 'posts/GET_POSTS_FROM_USER';
 const getPostsFromUser = posts => {
     return {
@@ -9,7 +23,7 @@ const getPostsFromUser = posts => {
     };
 };
 export const getAllPostsFromUser = userId => async dispatch => {
-    const res = await csrfFetch(`/api/posts/${userId}/`);
+    const res = await csrfFetch(`/api/posts/${userId}`);
     const posts = await res.json();
     dispatch(getPostsFromUser(posts));
 };
@@ -77,13 +91,17 @@ const postReducer = (state={}, action) => {
     let newState = { ...state };
 
     switch (action.type) {
+        case GET_POSTS:
         case GET_POSTS_FROM_USER:
-            action.posts.forEach(post => newState[post.id] = post);
+            newState = action.posts;
             return { ...newState };
 
         case CREATE_POST:
+            newState[action.post.data.id] = action.post;
+            return { ...newState };
+
         case EDIT_POST:
-            newState[action.post.id] = action.post;
+            newState[action.post.id]['data'] = action.post;
             return { ...newState };
         
         case DELETE_POST:

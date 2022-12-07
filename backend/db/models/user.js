@@ -1,5 +1,5 @@
 'use strict';
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs'); 
 
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
@@ -23,13 +23,16 @@ module.exports = (sequelize, DataTypes) => {
       },
       scopes: {
         currentUser: {
-          attributes: { exclude: ['hashedPassword'] }
+          attributes: {
+            exclude: ['hashedPassword', 'createdAt', 'updatedAt']
+          }
         },
         loginUser: {
           attributes: {}
         }
       }
-    });
+    }
+    );
 
   User.prototype.toSafeObject = function () { // remember, this cannot be an arrow function
     const { id, username, profilePicture } = this; // context will be the User instance
@@ -45,7 +48,6 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   User.login = async function ({ username, password }) {
-    const { Op } = require('sequelize');
     const user = await User.scope('loginUser').findOne({ where: { username } });
     if (user && user.validatePassword(password)) {
       return await User.scope('currentUser').findByPk(user.id);
@@ -60,8 +62,8 @@ module.exports = (sequelize, DataTypes) => {
 
   User.associate = function (models) {
     // associations can be defined here
-    User.hasMany(models.Post, { foreignKey: 'userId' });
-    User.hasMany(models.Comment, { foreignKey: 'userId' });
+    User.hasMany(models.Post, { foreignKey: 'userId', as: 'postOwner' });
+    User.hasMany(models.Comment, { foreignKey: 'userId', as: 'commentOwner' });
   };
 
   return User;

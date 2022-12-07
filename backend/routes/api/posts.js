@@ -3,17 +3,37 @@ const { User, Post, Comment } = require('../../db/models');
 
 const router = express.Router();
 
+function postsData (posts) {
+    const data = {};
+    for (let post of posts) {
+        const comments = {};
+        for (let comment of post.comments) comments[comment.id] = comment;
+        data[post.id] = {
+            data: post,
+            postOwner: post.postOwner,
+            comments
+        };
+    };
+    return data;
+};
+
+// GET ALL POSTS
+router.get('/', async (req, res) => {
+    const posts = await Post.findAll({ include: [{ model: User, as: 'postOwner' }, { model: Comment, as: 'comments', include: { model: User, as: 'commentOwner' } }] });
+    return res.json(postsData(posts));
+});
+
+// GET ALL POSTS FROM USER
 router.get('/:userId/', async (req, res) => {
-    const posts = await Post.findAll({ where: { userId: req.params.userId } });
-    return res.json(posts);
+    const posts = await Post.findAll({ where: { userId: req.params.userId }, include: [{ model: User, as: 'postOwner' }, { model: Comment, as: 'comments', include: { model: User, as: 'commentOwner' } }] });
+    return res.json(postsData(posts));
 });
 
 router.post('/', async (req, res) => {
-    const { userId, image, caption } = req.body;
-    const newPost = await Post.create({ userId, image, caption });
+    const newPost = await Post.create(req.body);
     await newPost.save();
 
-    return res.json(newPost);
+    return res.json({ data: newPost, user: await User.findByPk(req.body.userId), comments: {} });
 });
 
 router.put('/', async (req, res) => {
