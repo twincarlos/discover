@@ -18,7 +18,6 @@ const configureStore = (preloadedState) => {
   return createStore(rootReducer, preloadedState, enhancer);
 };
 
-
 const rootReducer = combineReducers({
   session: sessionReducer,
   posts: postReducer

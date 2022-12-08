@@ -1,5 +1,5 @@
 const express = require('express');
-const { User, Post, Comment } = require('../../db/models');
+const { User, Post, Comment, Like } = require('../../db/models');
 
 const router = express.Router();
 
@@ -7,11 +7,15 @@ function postsData (posts) {
     const data = {};
     for (let post of posts) {
         const comments = {};
-        for (let comment of post.comments) comments[comment.id] = comment;
+        for (let comment of post.comments) comments[comment.id] = { comment, commentOwner: comment.commentOwner };
+
+        const likes = {};
+        for (let like of post.likes) likes[like.userId] = { like, liker: like.liker };
+
         data[post.id] = {
-            data: post,
-            postOwner: post.postOwner,
-            comments
+            post,
+            comments,
+            likes
         };
     };
     return data;
@@ -19,21 +23,19 @@ function postsData (posts) {
 
 // GET ALL POSTS
 router.get('/', async (req, res) => {
-    const posts = await Post.findAll({ include: [{ model: User, as: 'postOwner' }, { model: Comment, as: 'comments', include: { model: User, as: 'commentOwner' } }] });
+    const posts = await Post.findAll({ include: [{ model: User, as: 'postOwner' }, { model: Comment, as: 'comments', include: { model: User, as: 'commentOwner' } }, { model: Like, as: 'likes', include: { model: User, as: 'liker' } }] });
     return res.json(postsData(posts));
 });
 
 // GET ALL POSTS FROM USER
 router.get('/:userId/', async (req, res) => {
-    const posts = await Post.findAll({ where: { userId: req.params.userId }, include: [{ model: User, as: 'postOwner' }, { model: Comment, as: 'comments', include: { model: User, as: 'commentOwner' } }] });
+    const posts = await Post.findAll({ where: { userId: req.params.userId }, include: [{ model: User, as: 'postOwner' }, { model: Comment, as: 'comments', include: { model: User, as: 'commentOwner' } }, { model: Like, as: 'likes', include: { model: User, as: 'liker' } }] });
     return res.json(postsData(posts));
 });
 
 router.post('/', async (req, res) => {
-    const newPost = await Post.create(req.body);
-    await newPost.save();
-
-    return res.json({ data: newPost, user: await User.findByPk(req.body.userId), comments: {} });
+    const post = await Post.create(req.body);
+    return res.json({ post, user: await User.findByPk(req.body.userId), comments: {}, likes: {} });
 });
 
 router.put('/', async (req, res) => {

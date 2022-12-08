@@ -2,38 +2,38 @@ import { csrfFetch } from './csrf';
 
 // GET ALL POSTS
 const GET_POSTS = 'posts/GET_POSTS';
-const getPosts = posts => {
+const getPosts = payload => {
     return {
         type: GET_POSTS,
-        posts
+        payload
     };
 };
 export const getAllPosts = () => async dispatch => {
     const res = await csrfFetch('/api/posts/');
-    const posts = await res.json();
-    dispatch(getPosts(posts));
+    const payload = await res.json();
+    dispatch(getPosts(payload));
 };
 
 // GET ALL POSTS FROM USER
 const GET_POSTS_FROM_USER = 'posts/GET_POSTS_FROM_USER';
-const getPostsFromUser = posts => {
+const getPostsFromUser = payload => {
     return {
         type: GET_POSTS_FROM_USER,
-        posts
+        payload
     };
 };
 export const getAllPostsFromUser = userId => async dispatch => {
     const res = await csrfFetch(`/api/posts/${userId}`);
-    const posts = await res.json();
-    dispatch(getPostsFromUser(posts));
+    const payload = await res.json();
+    dispatch(getPostsFromUser(payload));
 };
 
 // CREATE POST
 const CREATE_POST = 'posts/CREATE_POST';
-const createPost = post => {
+const createPost = payload => {
     return {
         type: CREATE_POST,
-        post
+        payload
     };
 };
 export const createOnePost = ({ userId, image, caption }) => async dispatch => {
@@ -44,16 +44,16 @@ export const createOnePost = ({ userId, image, caption }) => async dispatch => {
         },
         body: JSON.stringify({ userId, image, caption })
     });
-    const post = await res.json();
-    dispatch(createPost(post));
+    const payload = await res.json();
+    dispatch(createPost(payload));
 };
 
 // EDIT POST
 const EDIT_POST = '/posts/EDIT_POST';
-const editPost = post => {
+const editPost = payload => {
     return {
         type: EDIT_POST,
-        post
+        payload
     };
 };
 export const editOnePost = ({ postId, caption }) => async dispatch => {
@@ -64,16 +64,16 @@ export const editOnePost = ({ postId, caption }) => async dispatch => {
         },
         body: JSON.stringify({ postId, caption })
     });
-    const post = await res.json();
-    dispatch(editPost(post));
+    const payload = await res.json();
+    dispatch(editPost(payload));
 };
 
 // DELETE POST
 const DELETE_POST = '/posts/DELETE_POST';
-const deletePost = postId => {
+const deletePost = payload => {
     return {
         type: DELETE_POST,
-        postId
+        payload
     };
 };
 export const deleteOnePost = postId => async dispatch => {
@@ -84,15 +84,15 @@ export const deleteOnePost = postId => async dispatch => {
         },
         body: JSON.stringify({ postId })
     })
-    .then(dispatch(deletePost(postId)));
+    .then(dispatch(deletePost({ postId })));
 };
 
 // CREATE COMMENT
 const CREATE_COMMENT = '/posts/CREATE_COMMENT';
-const createComment = comment => {
+const createComment = payload => {
     return {
         type: CREATE_COMMENT,
-        comment
+        payload
     };
 };
 export const createOneComment = ({ userId, postId, text }) => async dispatch => {
@@ -103,35 +103,36 @@ export const createOneComment = ({ userId, postId, text }) => async dispatch => 
         },
         body: JSON.stringify({ userId, postId, text })
     });
-    const comment = await res.json();
-    dispatch(createComment(comment));
+    const payload = await res.json();
+    dispatch(createComment(payload));
 };
 
 // EDIT COMMENT
 const EDIT_COMMENT = '/posts/EDIT_COMMENT';
-const editComment = comment => {
+const editComment = payload => {
     return {
         type: EDIT_COMMENT,
-        comment
+        payload
     };
 };
-export const editOneComment = ({ userId, commentId, text }) => async dispatch => {
+export const editOneComment = ({ commentId, text }) => async dispatch => {
     const res = await csrfFetch('/api/comments/', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ userId, commentId, text })
+        body: JSON.stringify({ commentId, text })
     });
-    const comment = await res.json();
-    dispatch(editComment(comment));
+    const payload = await res.json();
+    dispatch(editComment(payload));
 };
 
+// DELETE COMMENT
 const DELETE_COMMENT = '/posts/DELETE_COMMENT';
-const deleteComment = comment => {
+const deleteComment = payload => {
     return {
         type: DELETE_COMMENT,
-        comment
+        payload
     };
 };
 export const deleteOneComment = ({ postId, commentId }) => async dispatch => {
@@ -145,37 +146,84 @@ export const deleteOneComment = ({ postId, commentId }) => async dispatch => {
     .then(dispatch(deleteComment({ postId, commentId })));
 };
 
+// LIKE POST
+const LIKE_POST = '/posts/LIKE_POST';
+const likePost = payload => {
+    return {
+        type: LIKE_POST,
+        payload
+    };
+};
+export const likeOnePost = ({ userId, postId }) => async dispatch => {
+    const res = await csrfFetch('/api/likes/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId, postId })
+    });
+    const payload = await res.json();
+    dispatch(likePost(payload));
+};
+
+// UNLIKE POST
+const UNLIKE_POST = '/posts/UNLIKE_POST';
+const unlikePost = payload => {
+    return {
+        type: UNLIKE_POST,
+        payload
+    };
+};
+export const unlikeOnePost = ({ likeId, userId, postId }) => async dispatch => {
+    await csrfFetch('/api/likes/', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ likeId })
+    })
+    .then(dispatch(unlikePost({ userId, postId })));
+};
+
 const postReducer = (state={}, action) => {
     let newState = { ...state };
 
     switch (action.type) {
         case GET_POSTS:
         case GET_POSTS_FROM_USER:
-            newState = action.posts;
+            newState = action.payload;
             return { ...newState };
 
         case CREATE_POST:
-            newState[action.post.data.id] = action.post;
+            newState[action.payload.post.id] = action.payload;
             return { ...newState };
 
         case EDIT_POST:
-            newState[action.post.id]['data'] = action.post;
+            newState[action.payload.id].post = action.payload;
             return { ...newState };
         
         case DELETE_POST:
-            delete newState[action.postId];
+            delete newState[action.payload.postId];
             return { ...newState };
 
         case CREATE_COMMENT:
-            newState[action.comment.postId].comments[action.comment.id] = action.comment;
+            newState[action.payload.comment.postId].comments[action.payload.comment.id] = action.payload;
             return { ...newState };
 
         case EDIT_COMMENT:
-            newState[action.comment.postId].comments[action.comment.id] = action.comment;
+            newState[action.payload.postId].comments[action.payload.id].comment = action.payload;
             return { ...newState };
         
         case DELETE_COMMENT:
-            delete newState[action.comment.postId].comments[action.comment.commentId];
+            delete newState[action.payload.postId].comments[action.payload.commentId];
+            return { ...newState };
+
+        case LIKE_POST:
+            newState[action.payload.like.postId].likes[action.payload.like.userId] = action.payload;
+            return { ...newState };
+
+        case UNLIKE_POST:
+            delete newState[action.payload.postId].likes[action.payload.userId];
             return { ...newState };
 
         default:
