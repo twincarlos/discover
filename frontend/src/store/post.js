@@ -48,7 +48,7 @@ export const createOnePost = ({ userId, image, caption }) => async dispatch => {
     dispatch(createPost(post));
 };
 
-// EDIT_POST
+// EDIT POST
 const EDIT_POST = '/posts/EDIT_POST';
 const editPost = post => {
     return {
@@ -68,7 +68,7 @@ export const editOnePost = ({ postId, caption }) => async dispatch => {
     dispatch(editPost(post));
 };
 
-// DELETE_POST
+// DELETE POST
 const DELETE_POST = '/posts/DELETE_POST';
 const deletePost = postId => {
     return {
@@ -85,6 +85,64 @@ export const deleteOnePost = postId => async dispatch => {
         body: JSON.stringify({ postId })
     })
     .then(dispatch(deletePost(postId)));
+};
+
+// CREATE COMMENT
+const CREATE_COMMENT = '/posts/CREATE_COMMENT';
+const createComment = comment => {
+    return {
+        type: CREATE_COMMENT,
+        comment
+    };
+};
+export const createOneComment = ({ userId, postId, text }) => async dispatch => {
+    const res = await csrfFetch('/api/comments/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId, postId, text })
+    });
+    const comment = await res.json();
+    dispatch(createComment(comment));
+};
+
+// EDIT COMMENT
+const EDIT_COMMENT = '/posts/EDIT_COMMENT';
+const editComment = comment => {
+    return {
+        type: EDIT_COMMENT,
+        comment
+    };
+};
+export const editOneComment = ({ userId, commentId, text }) => async dispatch => {
+    const res = await csrfFetch('/api/comments/', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId, commentId, text })
+    });
+    const comment = await res.json();
+    dispatch(editComment(comment));
+};
+
+const DELETE_COMMENT = '/posts/DELETE_COMMENT';
+const deleteComment = comment => {
+    return {
+        type: DELETE_COMMENT,
+        comment
+    };
+};
+export const deleteOneComment = ({ postId, commentId }) => async dispatch => {
+    await csrfFetch('/api/comments/', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ commentId })
+    })
+    .then(dispatch(deleteComment({ postId, commentId })));
 };
 
 const postReducer = (state={}, action) => {
@@ -106,6 +164,18 @@ const postReducer = (state={}, action) => {
         
         case DELETE_POST:
             delete newState[action.postId];
+            return { ...newState };
+
+        case CREATE_COMMENT:
+            newState[action.comment.postId].comments[action.comment.id] = action.comment;
+            return { ...newState };
+
+        case EDIT_COMMENT:
+            newState[action.comment.postId].comments[action.comment.id] = action.comment;
+            return { ...newState };
+        
+        case DELETE_COMMENT:
+            delete newState[action.comment.postId].comments[action.comment.commentId];
             return { ...newState };
 
         default:

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAllPostsFromUser, createOnePost, editOnePost, deleteOnePost } from '../../store/post';
+import { 
+    getAllPostsFromUser, createOnePost, editOnePost, deleteOnePost,
+    createOneComment, editOneComment, deleteOneComment
+} from '../../store/post';
 
 export default function Profile () {
     const dispatch = useDispatch();
@@ -22,7 +25,9 @@ export default function Profile () {
     const editPost = postId => dispatch(editOnePost({ postId, caption }));
     const deletePost = postId => dispatch(deleteOnePost(postId));
 
-
+    const createComment = postId => dispatch(createOneComment({ userId: sessionUser.id, postId, text: caption }));
+    const editComment = commentId => dispatch(editOneComment({ userId: sessionUser.id, commentId, text: caption }));
+    const deleteComment = (postId, commentId) => dispatch(deleteOneComment({ postId, commentId }));
 
     return (
         <>
@@ -31,9 +36,10 @@ export default function Profile () {
             <input placeholder='image' type='text' value={image} onChange={e => setImage(e.target.value)}></input>
             {
                 posts.map(post => (
-                    <div key={post.data.id}>
+                    <div style={{ border: '1px solid black', margin: 10 }} key={post.data.id}>
                         <img src={post.data.image} style={{ width: 300 }}/>
                         <p>{post.data.caption}</p>
+                        <button onClick={() => createComment(post.data.id)}>COMMENT</button>
                         <button onClick={() => editPost(post.data.id)}>EDIT</button>
                         <button onClick={() => deletePost(post.data.id)}>DELETE</button>
                         <div>
@@ -41,9 +47,8 @@ export default function Profile () {
                                 Object.values(post.comments).map(comment => (
                                     <div key={comment.id}>
                                         <p>{comment.commentOwner.username}: {comment.text}</p>
-                                        <button>COMMENT</button>
-                                        <button>EDIT</button>
-                                        <button>DELETE</button>
+                                        <button onClick={() => editComment(comment.id)}>EDIT</button>
+                                        <button onClick={() => deleteComment(post.data.id, comment.id)}>DELETE</button>
                                     </div>
                                 ))
                             }
