@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
 import { 
     getAllPostsFromUser, createOnePost, editOnePost, deleteOnePost,
     createOneComment, editOneComment, deleteOneComment, likeOnePost, unlikeOnePost
 } from '../../store/post';
 
+import './Profile.css';
+
 export default function Profile () {
     const dispatch = useDispatch();
     const [isLoaded, setIsLoaded] = useState(false);
+    const userId = useParams().userId;
 
     const sessionUser = useSelector(state => state.session.user);
     const posts = useSelector(state => state.posts);
@@ -16,7 +20,7 @@ export default function Profile () {
     const [image, setImage] = useState('');
 
     useEffect(() => {
-        (async () => await dispatch(getAllPostsFromUser(sessionUser.id)).then(() => setIsLoaded(true)))();
+        (async () => await dispatch(getAllPostsFromUser(userId)).then(() => setIsLoaded(true)))();
     }, [dispatch, sessionUser.id]);
 
     if (!isLoaded) return null;
@@ -62,5 +66,8 @@ export default function Profile () {
                 ))
             }
         </>
+        // <div id='profile-main'>
+
+        // </div>
     );
 };

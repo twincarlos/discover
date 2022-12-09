@@ -12,7 +12,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     profilePicture: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      default: 'https://w7.pngwing.com/pngs/867/694/png-transparent-user-profile-default-computer-icons-network-video-recorder-avatar-cartoon-maker-blue-text-logo.png'
     }
   },
     {
